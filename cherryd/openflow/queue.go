@@ -25,6 +25,14 @@ import (
 	"encoding"
 )
 
+type Queue interface {
+	QueueID() uint32
+	Length() uint16
+	// Openflow 1.0 to 1.3 queue message only has one type of property: MinRate
+	Rate() uint16
+	encoding.BinaryUnmarshaler
+}
+
 type QueueGetConfigRequest interface {
 	Header
 	Port() OutPort
@@ -33,3 +41,10 @@ type QueueGetConfigRequest interface {
 }
 
 // TODO: QueueGetConfigReply
+
+type QueueGetConfigReply interface {
+	Header
+	Port() OutPort
+	Queue() []Queue
+	encoding.BinaryUnmarshaler
+}
