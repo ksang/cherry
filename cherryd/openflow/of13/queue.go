@@ -57,3 +57,79 @@ func (r *QueueGetConfigRequest) MarshalBinary() ([]byte, error) {
 
 	return r.Message.MarshalBinary()
 }
+
+type Queue struct {
+	id uint32
+	length  uint16
+	rate    uint16
+}
+
+func (r *Queue) ID() uint32 {
+	return r.id
+}
+
+func (r *Queue) Length() uint16 {
+	return r.length
+}
+
+func (r *Queue) Rate() uint16 {
+	return r.rate
+}
+
+func (r *Queue) UnmarshalBinary(data []byte) error {
+	if len(data) != 24 {
+		return openflow.ErrInvalidPacketLength
+	}
+	r.id = binary.BigEndian.Uint32(data[0:4])
+	r.length = binary.BigEndian.Uint16(data[4:6])
+	// data[6:8] is pad
+	property := binary.BigEndian.Uint16(data[8:10])
+	if property != 0x01 {
+		// Unknown property
+		return openflow.ErrUnsupportedProperty
+	}
+	r.rate = binary.BigEndian.Uint16(data[16:18])
+	return nil
+}
+
+func NewQueue() openflow.Queue {
+	return &Queue{}
+}
+
+type QueueGetConfigReply struct {
+	openflow.Message
+	port  openflow.OutPort
+	queue []openflow.Queue
+}
+
+func (r *QueueGetConfigReply) Port() openflow.OutPort {
+	return r.port
+}
+
+func (r *QueueGetConfigReply) Queue() []openflow.Queue {
+	return r.queue
+}
+
+func (r *QueueGetConfigReply) UnmarshalBinary(data []byte) error {
+	if err := r.Message.UnmarshalBinary(data); err != nil {
+		return err
+	}
+	payload := r.Payload()
+	if payload == nil || len(payload) < 8 {
+		return openflow.ErrInvalidPacketLength
+	}
+	r.port.SetValue(uint32(binary.BigEndian.Uint16(payload[0:2])))
+	if (len(payload)-8)%24 != 0 {
+		return openflow.ErrInvalidPacketLength
+	}
+	// Unmarshal Queues
+	for i := 8; i < len(payload); i += 24 {
+		q := NewQueue()
+		if err := q.UnmarshalBinary(payload[i : i+24]); err != nil {
+			return err
+		}
+		r.queue = append(r.queue, q)
+	}
+
+	return nil
+}

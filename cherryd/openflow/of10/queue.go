@@ -55,13 +55,13 @@ func (r *QueueGetConfigRequest) MarshalBinary() ([]byte, error) {
 }
 
 type Queue struct {
-	queueID uint32
+	id uint32
 	length  uint16
 	rate    uint16
 }
 
-func (r *Queue) QueueID() uint32 {
-	return r.queueID
+func (r *Queue) ID() uint32 {
+	return r.id
 }
 
 func (r *Queue) Length() uint16 {
@@ -76,13 +76,13 @@ func (r *Queue) UnmarshalBinary(data []byte) error {
 	if len(data) != 24 {
 		return openflow.ErrInvalidPacketLength
 	}
-	r.queueID = binary.BigEndian.Uint32(data[0:4])
+	r.id = binary.BigEndian.Uint32(data[0:4])
 	r.length = binary.BigEndian.Uint16(data[4:6])
 	// data[6:8] is pad
 	property := binary.BigEndian.Uint16(data[8:10])
 	if property != 0x01 {
 		// Unknown property
-		return nil
+		return openflow.ErrUnsupportedProperty
 	}
 	r.rate = binary.BigEndian.Uint16(data[16:18])
 	return nil

@@ -36,6 +36,7 @@ var (
 	ErrMissingIPProtocol     = errors.New("missing IP protocol")
 	ErrMissingEtherType      = errors.New("missing Ethernet type")
 	ErrUnsupportedMatchType  = errors.New("unsupported flow match type")
+	ErrUnsupportedProperty   = errors.New("unsupported property")
 )
 
 // Abstract factory
