@@ -115,6 +115,7 @@ func (r *QueueProperty) UnmarshalBinary(data []byte) error {
 	case openflow.OFPQT_EXPERIMENTER:
 		r.experimenter = binary.BigEndian.Uint32(data[8:12])
 		// data[12:16] is pad
+		r.data = make([]byte, int(r.length)-16)
 		copy(r.data, data[16:int(r.length)])
 	}
 	return nil
